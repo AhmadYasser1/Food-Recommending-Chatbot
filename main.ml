@@ -13,28 +13,12 @@ type rules =
 | Departure of string
 ;;
 
-let dictionary = "Dictionary.csv";;
-
-let read_dictionary =
-  let dictionary_ic = open_in dictionary in
-  let rec loop acc =
-    try
-      let line = input_line dictionary_ic in
-      let fields = String.split_on_char ',' line in
-      loop (fields :: acc)
-    with
-    | End_of_file -> close_in dictionary_ic; List.rev acc
-  in
-  loop []
-;;
-
-let words_lst = read_dictionary;;
 
 let get_string =
   read_line
 ;;
 
-let greet_user =
+let greet_user_response =
   let rand = Random.int 5 in
   match rand with
   | 0 -> "\nHello, how can I help you?\n\n"
@@ -57,13 +41,44 @@ let is_digit c =
   loc <> None
 ;;
 
-let word_in_lst dictionary_lst word in
-  let rec helper dictionary_lst word index =
-    
+let dictionary_file = "Dictionary.csv";;
+
+let read_dictionary_csv =
+  let dictionary_ic = open_in dictionary_file in
+  let rec loop acc =
+    try
+      let line = input_line dictionary_ic in
+      let fields = String.split_on_char ',' line in
+      loop (fields :: acc)
+    with
+    | End_of_file -> close_in dictionary_ic; List.rev acc
+  in
+  loop []
 ;;
 
+let dictionary_lst = read_dictionary_csv;;
 
-let rec lex_string string = (* create a list of tokens *)
+let map_dictionary_to_list_list dictionary_lst word =
+  List.map (fun x -> List.filter (fun y -> y = word) x) dictionary_lst
+;;
+
+let map_list_list_to_list lst word = List.map (fun x -> 
+  match x with
+  | [] | _::_::_ -> ""
+  | [x] -> x) (map_dictionary_to_list_list dictionary_lst word)
+;;
+
+let get_index_of_keyword filtered_list =
+ let rec helper filtered_list pos =
+   match filtered_list with
+   | strin :: b when (String.length strin > 0)-> pos
+   | _::b -> helper b (pos+1)
+   | [] -> pos
+ in
+ helper filtered_list 1
+;;
+
+let rec lex_string string =
   let len = String.length string in
   let rec lex pos =
     if pos >= len then
@@ -77,19 +92,15 @@ let rec lex_string string = (* create a list of tokens *)
         incr stop;
         done;
         let word = String.lowercase_ascii (String.sub string pos (!stop - pos)) in
-        let num = word_in_lst words_lst word in
+        let num =  map_list_list_to_list (map_dictionary_to_list_list dictionary_lst word) (word) |> get_index_of_keyword in
         match num with
         | 1 -> Greeting (word) :: lex(!stop)
-        match word with
-        | "hello" | "hey" | "hi" | "heyo" -> Greeting (word) :: lex (!stop)
-        | List.filter (x = word) lst
-        | "what" -> Question (word) :: lex (!stop)
-        | "food" | "eat" | "hungry" | "starving" -> Hungry (word) :: lex (!stop) 
-        | "chicken" | "steak" | "shwarema" | "fries" | "feter" | "pizza" |
-        "sushi" | "fish" | "wings" | "burger" -> Food_Type (word) :: lex (!stop)
-        | "indoor" | "indoors" | "outdoor" | "outdoors" | "take-away" -> In_Out word :: lex (!stop)
-        | "recommend" | "recommendations" | "recommendation"-> Recommendation (word) :: lex (!stop)
-        | "bye" | "goodbye" | "later" -> Departure (word) :: lex (!stop)
+        | 2 -> Question (word) :: lex (!stop)
+        | 3 -> Hungry (word) :: lex (!stop)
+        | 4 -> Food_Type (word) :: lex (!stop)
+        | 5 -> In_Out (word) :: lex (!stop)
+        | 6 -> Recommendation (word) :: lex (!stop)
+        | 7 -> Departure (word) :: lex (!stop)
         | _ -> lex (!stop)
       else
         if (is_digit d) then
@@ -120,7 +131,7 @@ let lex_place string =
 let rec generate_response lst flist =
   match lst with
   | Question _::t -> generate_response t (flist)
-  | Greeting _::_ -> printf "%s" greet_user; generate_response (get_string () |> lex_string) (flist)
+  | Greeting _::_ -> printf "%s" greet_user_response; generate_response (get_string () |> lex_string) (flist)
   | Hungry _::_ -> printf "\nOkay, What are you in the mood to eat?\n\n"; generate_response (get_string () |> lex_string) (flist)
   | Recommendation _::_ -> printf "\nWell there's burger, fried chicken, sushi, beef, steak, shwarema and koshary, 
   Choose your pick.\n\n"; generate_response (get_string () |> lex_string) (flist)
@@ -139,16 +150,6 @@ How can i help you???\n\n"
 
 let final = generate_response (get_string () |> lex_string) [];;
 
-let rec print_lex lst =
-  match lst with
-  | Food_Type w::t -> printf "\nFood type is %s" w; print_lex t
-  | Location w::t -> printf "\nThe location is %s" w; print_lex t
-  | In_Out w::t -> printf "\nThe type of enviorment is %s" w; print_lex t
-  | Price_Range w::t -> printf "\nThe price range is %s" w; print_lex t
-  | [] -> ()
-  | _::_ -> ()
-;;
-
 let restaurants = "Restaurants Dataset.csv";;
 
 let take_until_comma str =
@@ -162,7 +163,7 @@ let take_until_comma str =
   loop 0
 ;;
 
-let matchingStrings str substr =
+let matching_strings str substr =
   let len_str = String.length str in
   let len_substr = String.length substr in
   let rec loop i =
@@ -179,7 +180,7 @@ let matchingStrings str substr =
 let rec findMatch str lst = 
   match lst with
   | [] -> true
-  | description::tail -> if (matchingStrings str description = true) 
+  | description::tail -> if (matching_strings str description = true) 
     then findMatch str tail 
   else false
 ;;
@@ -218,4 +219,3 @@ let () =
       flush stdout;
       (* write on the underlying device now *)
       close_in ic
-
