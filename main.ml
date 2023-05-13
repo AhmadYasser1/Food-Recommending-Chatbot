@@ -6,13 +6,13 @@ type rules =
 | Question of string
 | Hungry of string
 | Food_Type of string
-| Location of string
 | In_Out of string 
-| Price_Range of string
 | Recommendation of string
 | Departure of string
+| Delivery of string
+| Location of string
+| Price_Range of string
 ;;
-
 
 let get_string =
   read_line
@@ -101,6 +101,8 @@ let rec lex_string string =
         | 5 -> In_Out (word) :: lex (!stop)
         | 6 -> Recommendation (word) :: lex (!stop)
         | 7 -> Departure (word) :: lex (!stop)
+        | 8 -> Delivery (word) :: lex (!stop)
+        | 9 -> Location (word) :: lex (!stop)
         | _ -> lex (!stop)
       else
         if (is_digit d) then
@@ -135,12 +137,13 @@ let rec generate_response lst flist =
   | Hungry _::_ -> printf "\nOkay, What are you in the mood to eat?\n\n"; generate_response (get_string () |> lex_string) (flist)
   | Recommendation _::_ -> printf "\nWell there's burger, fried chicken, sushi, beef, steak, shwarema and koshary, 
   Choose your pick.\n\n"; generate_response (get_string () |> lex_string) (flist)
-  | Food_Type w::_ ->  printf "\nOhh nice choice. Okay what's the location where you'll eat?\n\n"; generate_response (get_string () |> lex_place) (flist@[w])
+  | Food_Type w::_ ->  printf "\nOhh nice choice. Okay what's the location where you'll eat?\n\n"; generate_response (get_string () |> lex_string) (flist@[w])
   | Location w::_ -> printf "\nOkay that's a nice place. Do you want to dine (indoors, outdoors or do you want it delivery)?\n\n"; generate_response (get_string () |> lex_string) (flist@[w])
   | In_Out w::_ -> printf "\nI like your picks. Okay now what's ur price range?\n\n"; generate_response (get_string () |> lex_string) (flist@[w])
   | Price_Range w::_ -> printf "\nOooh that's gonna be cutting it. Okay let me process things and I'll get to you in a moment\n\n"; (flist @ [w])
   | Departure _::_ -> printf "\nHope to see you again!!\n\n"; flist
   | [] -> printf "\nI didn't quite understand that. Could you come again please.\n\n"; generate_response (get_string () |> lex_string) (flist)
+  | _ -> []
 ;;
 
 printf "\nHello User\n
