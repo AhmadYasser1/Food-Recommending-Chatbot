@@ -108,8 +108,8 @@ let rec lex_string string =
         while !stop < len && is_char (Char.lowercase_ascii string.[!stop]) do
         incr stop;
         done;
-        let word = final_string (String.lowercase_ascii (String.sub string pos (!stop - pos))) in
-        let num =  map_list_list_to_list (map_dictionary_to_list_list dictionary_lst word) (word) |> get_index_of_keyword in
+        let word = String.lowercase_ascii (String.sub string pos (!stop - pos)) in
+        let num =  map_list_list_to_list (map_dictionary_to_list_list dictionary_lst word) (final_string(word)) |> get_index_of_keyword in
         match num with
         | 1 -> Greeting (word) :: lex(!stop)
         | 2 -> Question (word) :: lex (!stop)
@@ -197,12 +197,15 @@ let matching_strings str substr =
   loop 0
 ;;
 
-let rec findMatch str lst = 
-  match lst with
-  | [] -> true
-  | description::tail -> if (matching_strings str description = true) 
-    then findMatch str tail 
-  else false
+let calculatePoints str list =
+  let rec helper lst restaurantName points =
+    match lst with
+    | [] -> (restaurantName, points)
+    | description::tail when (matching_strings str description = true) -> helper tail restaurantName (points+10)
+    | description::tail when (matching_strings str description = false) -> helper tail restaurantName points
+    | _::_ -> (restaurantName, points)
+  in
+  helper list (take_until_comma str) 0
 ;;
 
 let take_until_comma str =
@@ -214,28 +217,42 @@ let take_until_comma str =
       loop (i + 1)
   in
   loop 0
+;;
 
+let rec createRestList ic = 
+  match input_line ic with
+  | exception End_of_file -> []
+  | line -> (calculatePoints ((String.lowercase_ascii line)) final) :: createRestList ic
+;;
+  
 let () =
 
   (* flush and close the channel *)
 
   (* Read file and display the first line *)
   if final <> [] then
-    let ic = open_in restaurants 
-      in
-        let lineFound = ref "" in 
-        let found_match = ref false in
-        let matchingRest = ref true
-        in 
-          while !matchingRest && not !found_match do
-            match input_line ic with
-            | exception End_of_file -> matchingRest := false
-            | line -> begin found_match := findMatch (String.lowercase_ascii line) final; lineFound := line end
-          done;
-        if !found_match then
-            Printf.printf ("My Pick for you is %s") (take_until_comma !lineFound)
-        else print_endline "Sorry I don't have a match for what you want";
+    let ic = open_in restaurants in
+
+    let restaurantsPoints = createRestList ic in
+
+    let sortedRestaurants = List.sort (fun (_, c1) (_, c2) -> compare c2 c1) restaurantsPoints in
+      Printf.printf "The first restaurant I recommend for you is %s" (fst (List.nth sortedRestaurants 0));
+      print_endline "";
+      Printf.printf "The second restaurant I recommend for you is %s" (fst (List.nth sortedRestaurants 1));
+      print_endline "";
+      Printf.printf "The third restaurant I recommend for you is %s" (fst (List.nth sortedRestaurants 2));
+
       (* write the result to stdout *)
       flush stdout;
       (* write on the underlying device now *)
       close_in ic
+
+(*The first restaurant I recommend to you is
+
+Restaurant name: 
+Rating:
+Popular Dish:
+Location:
+Hotline:
+
+*)
