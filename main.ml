@@ -56,10 +56,27 @@ let read_dictionary_csv =
   loop []
 ;;
 
+let string_to_clst word = 
+  String.fold_left(fun acc x -> acc @ [x]) [] word
+;;
+
+let remove_duplicates clst =
+  let rec helper clst acc =
+  match clst with
+  | [] -> acc
+  | h::t -> if List.mem h acc then helper (t) (acc) else helper (t) (h::acc)
+  in 
+  helper clst []
+;;
+
+let final_string word = 
+  List.fold_left (fun acc x -> acc ^ (String.make 1 x)) "" (List.rev (remove_duplicates (string_to_clst word)))
+;;
+
 let dictionary_lst = read_dictionary_csv;;
 
 let map_dictionary_to_list_list dictionary_lst word =
-  List.map (fun x -> List.filter (fun y -> y = word) x) dictionary_lst
+  List.map (fun x -> List.filter (fun y -> final_string(y) = word) x) dictionary_lst
 ;;
 
 let map_list_list_to_list lst word = List.map (fun x -> 
@@ -91,7 +108,7 @@ let rec lex_string string =
         while !stop < len && is_char (Char.lowercase_ascii string.[!stop]) do
         incr stop;
         done;
-        let word = String.lowercase_ascii (String.sub string pos (!stop - pos)) in
+        let word = final_string (String.lowercase_ascii (String.sub string pos (!stop - pos))) in
         let num =  map_list_list_to_list (map_dictionary_to_list_list dictionary_lst word) (word) |> get_index_of_keyword in
         match num with
         | 1 -> Greeting (word) :: lex(!stop)
@@ -136,7 +153,7 @@ let rec generate_response lst flist =
   | Greeting _::_ -> printf "%s" greet_user_response; generate_response (get_string () |> lex_string) (flist)
   | Hungry _::_ -> printf "\nOkay, What are you in the mood to eat?\n\n"; generate_response (get_string () |> lex_string) (flist)
   | Recommendation _::_ -> printf "\nWell there's burger, fried chicken, sushi, beef, steak, shwarema and koshary, 
-  Choose your pick.\n\n"; generate_response (get_string () |> lex_string) (flist)
+Choose your pick.\n\n"; generate_response (get_string () |> lex_string) (flist)
   | Food_Type w::_ ->  printf "\nOhh nice choice. Okay what's the location where you'll eat?\n\n"; generate_response (get_string () |> lex_string) (flist@[w])
   | Location w::_ -> printf "\nOkay that's a nice place. Do you want to dine (indoors, outdoors or do you want it delivery)?\n\n"; generate_response (get_string () |> lex_string) (flist@[w])
   | In_Out w::_ -> printf "\nI like your picks. Okay now what's ur price range?\n\n"; generate_response (get_string () |> lex_string) (flist@[w])
@@ -148,8 +165,8 @@ let rec generate_response lst flist =
 
 printf "\nHello User\n
 My name is Mr. Hungry a chatbot made to help you choose your next eating expereience.
-But first I need to ask you some stuff. Rumbling HAHA Looks like you're dying to get a bite to eat. Let's get into it.
-How can i help you???\n\n"
+But first I need to ask you some stuff. *RUMBLING* HAHA Looks like you're dying to get a bite to eat. Let's get into it.
+How can i help you???\n\n";;
 
 let final = generate_response (get_string () |> lex_string) [];;
 
