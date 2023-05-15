@@ -76,16 +76,16 @@ let removeDuplicatesFromString userInput =
 let dictionary_stringListList = convert_dictionary_csv_to_stringListList;;
 
 (* Maps the dictionary file to a string list list *)
-let map_dictionary_to_stringListList dictionary_file keyword =
+let filterDictionaryByKeyword dictionary_file keyword =
   List.map (fun string_list -> List.filter (fun word -> removeDuplicatesFromString(word) = removeDuplicatesFromString(keyword)) string_list) dictionary_file
 ;;
 
 (* Maps the string list list to a string list *)
-let map_stringListList_to_stringList lst keyword = 
+let map_stringListList_to_stringList dictionary_stringListList keyword = 
   List.map (
     fun word -> match word with
       | [] | _::_::_ -> ""
-      | [word] -> word) (map_dictionary_to_stringListList dictionary_stringListList keyword)
+      | [word] -> word) (filterDictionaryByKeyword dictionary_stringListList keyword)
     ;;
 
 (* Gets the index of the keyword found in the filtered list *)
