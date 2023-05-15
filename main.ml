@@ -33,17 +33,17 @@ let isPreference_Substring_Of_CurrentRow current_row user_preference =
 (* calculates the points for a given restaurant/row based on the user's preferences 
  * Returns a tuple as follows (Restaurant Name, Points)*)
 let calculatePoints current_row list_of_user_preferences =
-  let rec helper list restaurant_name points =
+  let rec helper list points =
     match list with
-    | [] -> (restaurant_name, points)
+    | [] -> points
     (* Checks if the user_preference is included in the row in question 
      * If it is a substring of the row, then 10 points are added
      * Else, no points are added*)
-    | user_preference :: tail when (isPreference_Substring_Of_CurrentRow current_row user_preference = true) -> helper tail restaurant_name (points + 10)
-    | user_preference :: tail when (isPreference_Substring_Of_CurrentRow current_row user_preference = false) -> helper tail restaurant_name points
-    | _ :: _ -> (restaurant_name, points)
+    | user_preference :: tail when (isPreference_Substring_Of_CurrentRow (String.lowercase_ascii current_row) user_preference = true) -> helper tail (points + 10)
+    | user_preference :: tail when (isPreference_Substring_Of_CurrentRow (String.lowercase_ascii current_row) user_preference = false) -> helper tail points
+    | _ :: _ -> points
   in
-  helper list_of_user_preferences (readStringUntilFirstComma current_row) 0
+  helper list_of_user_preferences 0
 ;;
 
 (* Calls the calculatePoints function over each restaurant/row
@@ -51,7 +51,11 @@ let calculatePoints current_row list_of_user_preferences =
 let rec createRestaurantsList restaurant_file_from_csv = 
   match input_line restaurant_file_from_csv with
   | exception End_of_file -> []
-  | line -> (calculatePoints (String.lowercase_ascii line) userPreference) :: createRestaurantsList restaurant_file_from_csv
+  | line -> (line ,calculatePoints line userPreference) :: createRestaurantsList restaurant_file_from_csv
+;;
+
+let split_on_comma str =
+  String.split_on_char ',' str
 ;;
 
 (* Anonymous function that displays the restaurant recommendations to the user based on the given preferences *)
@@ -68,11 +72,20 @@ let () =
 
     (* Sort, in descending order, the restaurants based on their calculated points *)
     let sorted_restaurants_points = List.sort (fun (_, point1) (_, point2) -> compare point2 point1) restaurants_points in
-      Printf.printf "The first restaurant I recommend for you is %s" (fst (List.nth sorted_restaurants_points 0));
-      print_endline "";
-      Printf.printf "The second restaurant I recommend for you is %s" (fst (List.nth sorted_restaurants_points 1));
-      print_endline "";
-      Printf.printf "The third restaurant I recommend for you is %s" (fst (List.nth sorted_restaurants_points 2));
+
+    for i = 0 to 2 do
+      let list_of_restaurant_info = split_on_comma(fst (List.nth sorted_restaurants_points i)) in
+      printf "The first restaurant I recommend for you is %s\n" (List.nth list_of_restaurant_info 0);
+      print_endline "\nRestaurant's Info\n";
+      printf "\tCity: %s,  Serving: %s,\n\tServices Available: %s,  You can Dine: %s,  Working Hours: %s\n
+      \tBest Dish: %s,  Capacity: %s,  Busyness: %s,  Waiting time: %s minutes,  Price Range (per person): %s\n
+      \tDelivery time: %s,  Hidden Gem?: %s,  GPS Location: %s,  You can take: %s there,  Rating: %s,  Hotline: %s\n\n" (List.nth list_of_restaurant_info 1)
+       (List.nth list_of_restaurant_info 2) (List.nth list_of_restaurant_info 3) (List.nth list_of_restaurant_info 4) (List.nth list_of_restaurant_info 5)
+      (List.nth list_of_restaurant_info 6) (List.nth list_of_restaurant_info 7) (List.nth list_of_restaurant_info 8) (List.nth list_of_restaurant_info 9)
+       (if (List.nth list_of_restaurant_info 10) = "$" then "5-200 EGP" else if (List.nth list_of_restaurant_info 10) = "$$" then "201-500 EGP" else "501+ EGP") 
+       (List.nth list_of_restaurant_info 11) (List.nth list_of_restaurant_info 12) (List.nth list_of_restaurant_info 13)
+      (List.nth list_of_restaurant_info 14) (List.nth list_of_restaurant_info 15) (List.nth list_of_restaurant_info 16);
+    done;
 
       (* write the result to stdout *)
       flush stdout;
