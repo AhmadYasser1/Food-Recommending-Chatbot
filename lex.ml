@@ -56,7 +56,7 @@ let string_to_charList string =
 ;;
 
 (* Removes the duplicated characters in a Char List *)
-let removeDuplicates char_list =
+let removeDuplicatesFromCharList char_list =
   let rec helper char_list accumulator =
   match char_list with
   | [] -> accumulator
@@ -66,10 +66,10 @@ let removeDuplicates char_list =
 ;;
 
 (* Computes a string with no duplicated characters *)
-let uniqueString userInput = 
+let removeDuplicatesFromString userInput = 
   (* String.make is used to create a string of length 1 for it to be concatenated with the accumulator
    * List.rev is used for the list to be compatible with the fold_left method *)
-  List.fold_left (fun accumulator char -> accumulator ^ (String.make 1 char)) "" (List.rev (removeDuplicates (string_to_charList userInput)))
+  List.fold_left (fun accumulator char -> accumulator ^ (String.make 1 char)) "" (List.rev (removeDuplicatesFromCharList (string_to_charList userInput)))
 ;;
 
 (* Result of the convert_dictionary_csv_to_stringListList *)
@@ -77,7 +77,7 @@ let dictionary_stringListList = convert_dictionary_csv_to_stringListList;;
 
 (* Maps the dictionary file to a string list list *)
 let map_dictionary_to_stringListList dictionary_file keyword =
-  List.map (fun string_list -> List.filter (fun word -> uniqueString(word) = uniqueString(keyword)) string_list) dictionary_file
+  List.map (fun string_list -> List.filter (fun word -> removeDuplicatesFromString(word) = removeDuplicatesFromString(keyword)) string_list) dictionary_file
 ;;
 
 (* Maps the string list list to a string list *)
@@ -122,7 +122,7 @@ let rec lexString userInput =
         (* maps the keyword to the rules in the dictionary to identify 
          *it falls under which rule while removing the duplicates 
          * Example: heeyy and helloo are validated*)
-        let keyword_index =  map_stringListList_to_stringList (map_dictionary_to_stringListList dictionary_stringListList userInput) (uniqueString(userInput)) |> get_index_of_keyword in
+        let keyword_index =  map_stringListList_to_stringList (map_dictionary_to_stringListList dictionary_stringListList userInput) (removeDuplicatesFromString(userInput)) |> get_index_of_keyword in
         match keyword_index with
         | 1 -> Greeting (keyword) :: tokenizeString(!stopping_index)
         | 2 -> Question (keyword) :: tokenizeString (!stopping_index)
