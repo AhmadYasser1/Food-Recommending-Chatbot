@@ -1,4 +1,4 @@
-#use "main.ml"
+#use "lex.ml"
 
 (* Reads each first string prior to the first comma in each row 
  * in the Restaurant.csv file to save each restaurant in a tuple 
@@ -51,16 +51,17 @@ let calculatePoints current_row list_of_user_preferences =
 let rec createRestaurantsList restaurant_file_from_csv = 
   match input_line restaurant_file_from_csv with
   | exception End_of_file -> []
-  | line -> (calculatePoints (String.lowercase_ascii line) lex_input) :: createRestaurantsList restaurant_file_from_csv
+  | line -> (calculatePoints (String.lowercase_ascii line) userPreference) :: createRestaurantsList restaurant_file_from_csv
 ;;
-  
+
 (* Anonymous function that displays the restaurant recommendations to the user based on the given preferences *)
 let () =
 
   (* flush and close the channel *)
 
   (* Read file and display the first line *)
-  if lex_input <> [] then
+  if userPreference
+     <> [] then
     let restaurant_file_from_csv = open_in "Restaurants.csv" in
 
     let restaurants_points = createRestaurantsList restaurant_file_from_csv in
