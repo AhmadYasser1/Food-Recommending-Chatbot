@@ -3,6 +3,22 @@ Random.self_init ();
 open Printf
 #use "rules.ml"
 
+(* Get input from the user *)
+let getUserInput = read_line;;
+
+(* Responds to the user's greeting *)
+let greetUserResponse =  
+  (* Greetings are chosen on a random basis for diversity *)
+  let random_int = Random.int 5 in
+  match random_int with
+  | 0 -> "\nHello, how can I help you?\n\n"
+  | 1 -> "\nWELCOME HUNGRY, how can I help you?\n\n"
+  | 2 -> "\n*rumble rumble* Okay okay, How can I help you?\n\n"
+  | 3 -> "\nI'm here I'm here. What can I do for you?\n\n"
+  | 4 -> "\nWhy the rush? How can I be of service?\n\n"
+  | _ -> "\nHello, how can I help you?\n\n"
+;;
+
 (* Checks if the given character (char) is a char 
  * that belongs to the rules
  * Helper function used in the lexing function below *)
@@ -20,30 +36,6 @@ let isDigit digit =
   int_index_option <> None
 ;;
 
-(* Convert String to Char List*)
-let string_to_charList string = 
-  String.fold_left(fun accumulator char -> accumulator @ [char]) [] string
-;;
-
-(* Get input from the user *)
-let getUserInput = read_line;;
-
-(* Removes the duplicated characters in a Char List *)
-let removeDuplicates char_list =
-  let rec helper char_list accumulator =
-  match char_list with
-  | [] -> accumulator
-  | head :: tail -> if List.mem head accumulator then helper (tail) (accumulator) else helper (tail) (head :: accumulator)
-  in 
-  helper char_list []
-;;
-(* Computes a string with no duplicated characters *)
-let uniqueString userInput = 
-  (* String.make is used to create a string of length 1 for it to be concatenated with the accumulator
-   * List.rev is used for the list to be compatible with the fold_left method *)
-  List.fold_left (fun accumulator char -> accumulator ^ (String.make 1 char)) "" (List.rev (removeDuplicates (string_to_charList userInput)))
-;;
-
 (* Reads the dictionary.csv file as a string and converts it to a String List List  *)
 let convert_dictionary_csv_to_stringListList =
   let dictionary_file_from_csv = open_in "Dictionary.csv" in
@@ -58,20 +50,42 @@ let convert_dictionary_csv_to_stringListList =
   loop_over_lines []
 ;;
 
+(* Convert String to Char List*)
+let string_to_charList string = 
+  String.fold_left(fun accumulator char -> accumulator @ [char]) [] string
+;;
+
+(* Removes the duplicated characters in a Char List *)
+let removeDuplicates char_list =
+  let rec helper char_list accumulator =
+  match char_list with
+  | [] -> accumulator
+  | head :: tail -> if List.mem head accumulator then helper (tail) (accumulator) else helper (tail) (head :: accumulator)
+  in 
+  helper char_list []
+;;
+
+(* Computes a string with no duplicated characters *)
+let uniqueString userInput = 
+  (* String.make is used to create a string of length 1 for it to be concatenated with the accumulator
+   * List.rev is used for the list to be compatible with the fold_left method *)
+  List.fold_left (fun accumulator char -> accumulator ^ (String.make 1 char)) "" (List.rev (removeDuplicates (string_to_charList userInput)))
+;;
+
 (* Result of the convert_dictionary_csv_to_stringListList *)
 let dictionary_stringListList = convert_dictionary_csv_to_stringListList;;
 
 (* Maps the dictionary file to a string list list *)
 let map_dictionary_to_stringListList dictionary_file keyword =
-  List.map (fun string_list -> List.filter (fun word -> uniqueString(word) = keyword) string_list) dictionary_file
+  List.map (fun string_list -> List.filter (fun word -> uniqueString(word) = uniqueString(keyword)) string_list) dictionary_file
 ;;
 
 (* Maps the string list list to a string list *)
-let map_stringListList_to_stringList stringListList keyword = 
+let map_stringListList_to_stringList lst keyword = 
   List.map (
     fun word -> match word with
       | [] | _::_::_ -> ""
-      | [word] -> word) (map_dictionary_to_stringListList stringListList keyword)
+      | [word] -> word) (map_dictionary_to_stringListList dictionary_stringListList keyword)
     ;;
 
 (* Gets the index of the keyword found in the filtered list *)
@@ -97,14 +111,14 @@ let rec lexString userInput =
     | ' ' | '\t' | '\n' | '?' | '!' | '.' -> tokenizeString (position + 1)
     (* If the lexer meets a character of type Char it takes all 
      * characters after it until the next character is not of type Char *)
-    | char when (isChar char) ->
-        (let stopping_index = ref position in
+    | char when (isChar char) ->(
+        let stopping_index = ref position in
         while !stopping_index < string_length && isChar (Char.lowercase_ascii userInput.[!stopping_index]) do
         incr stopping_index;
         done;
         (* keyword is saved as a substring of the original string from 
          *the calcaulated index above *)
-        let keyword = String.lowercase_ascii (String.sub userInput position (!stopping_index - position)) in
+        let keyword = uniqueString(String.lowercase_ascii (String.sub userInput position (!stopping_index - position))) in
         (* maps the keyword to the rules in the dictionary to identify 
          *it falls under which rule while removing the duplicates 
          * Example: heeyy and helloo are validated*)
@@ -143,26 +157,6 @@ let rec lexString userInput =
   tokenizeString 0
 ;;
 
-let lexRestaurantLocation userInput =
-  match userInput with
-  | string when String.lowercase_ascii string = "first settlement" -> [Restaurant_Location userInput]
-  | string when String.lowercase_ascii string = "rehab" -> [Restaurant_Location userInput]
-  | _ -> []
-;;
-
-(* Responds to the user's greeting *)
-let greetUserResponse =  
-  (* Greetings are chosen on a random basis for diversity *)
-  let random_int = Random.int 5 in
-  match random_int with
-  | 0 -> "\nHello, how can I help you?\n\n"
-  | 1 -> "\nWELCOME HUNGRY, how can I help you?\n\n"
-  | 2 -> "\n*rumble rumble* Okay okay, How can I help you?\n\n"
-  | 3 -> "\nI'm here I'm here. What can I do for you?\n\n"
-  | 4 -> "\nWhy the rush? How can I be of service?\n\n"
-  | _ -> "\nHello, how can I help you?\n\n"
-;;
-
 (* Generates response according to the user's response *)
 let rec generateResponse list_of_tokens list_of_responses =
   match list_of_tokens with
@@ -186,5 +180,5 @@ print_string "\nHello User\n
           But first I need to ask you some stuff. *RUMBLING* HAHA Looks like you're dying to get a bite to eat. Let's get into it.
           How can i help you???\n\n";;
 
-let lex_input = generateResponse (getUserInput () |> lexString) [];;
 
+let userPreference = generateResponse (getUserInput () |> lexString) [];;
