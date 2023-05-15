@@ -118,11 +118,11 @@ let rec lexString userInput =
         done;
         (* keyword is saved as a substring of the original string from 
          *the calcaulated index above *)
-        let keyword = uniqueString(String.lowercase_ascii (String.sub userInput position (!stopping_index - position))) in
+        let keyword = removeDuplicatesFromString(String.lowercase_ascii (String.sub userInput position (!stopping_index - position))) in
         (* maps the keyword to the rules in the dictionary to identify 
          *it falls under which rule while removing the duplicates 
          * Example: heeyy and helloo are validated*)
-        let keyword_index =  map_stringListList_to_stringList (map_dictionary_to_stringListList dictionary_stringListList userInput) (removeDuplicatesFromString(userInput)) |> get_index_of_keyword in
+        let keyword_index =  map_stringListList_to_stringList (filterDictionaryByKeyword dictionary_stringListList userInput) (removeDuplicatesFromString(userInput)) |> get_index_of_keyword in
         match keyword_index with
         | 1 -> Greeting (keyword) :: tokenizeString(!stopping_index)
         | 2 -> Question (keyword) :: tokenizeString (!stopping_index)
