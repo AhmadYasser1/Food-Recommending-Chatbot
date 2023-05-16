@@ -124,7 +124,7 @@ let rec lex_string string =
     (* maps the keyword to the rules in the dictionary to identify 
      * if it falls under a location from the dictionary or not *)
     let is_place = map_list_list_to_list (place) |> get_index_of_keyword in
-    if is_place = 9 then
+    if is_place = 8 then
       [Location place]
     else
     match string.[pos] with
@@ -181,7 +181,7 @@ let rec lex_string string =
 (* Generates response according to the user's response *)
 let rec generate_response lst flist =
   match lst with
-  | Question _::t -> generate_response t (flist)
+  | Question _::t -> if t = [Hungry "eat"] then generate_response ([Recommendation "recommend"]) flist else generate_response t flist
   | Greeting _::_ -> printf "%s" greet_user_response; generate_response (get_string () |> lex_string) (flist)
   | Hungry _::_ -> printf "\nOkay, What are you in the mood to eat?\n\n"; generate_response (get_string () |> lex_string) (flist)
   | Recommendation _::_ -> printf "\nWell there's burger, fried chicken, sushi, beef, steak, shawerma and koshary 
