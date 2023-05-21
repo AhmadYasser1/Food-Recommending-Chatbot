@@ -135,10 +135,7 @@ let rec lexString userInput =
         (* maps the keyword to the rules in the dictionary to identify 
         * it falls under which rule while removing the duplicates 
         * Example: heeyy and helloo are validated *)
-        printf "%s\n" keyword;
         let keyword_index =  get_index_of_keyword (map_stringListList_to_stringList (filterDictionaryByKeyword (convert_dictionary_stringListList () ) keyword) (removeDuplicatesInString(keyword))) in
-        printf "%s\n" keyword;
-        printf "%d\n" keyword_index;
         match keyword_index with
         | 1 -> resultArray.(1) <- [Some (Recommendation (keyword))] @ resultArray.(1); tokenizeString (!stopping_index)
         | 2 -> resultArray.(2) <- [Some (Hunger (keyword))] @ resultArray.(2); tokenizeString (!stopping_index)
@@ -412,7 +409,7 @@ let rec generate_response () =
         (() |> getUserInput "Enter your response: " |> lexString);
         if (needRecommendations ()) then
           begin
-            resultArray.(2) <- [Some (Recommendation ("Recommend"))] @ resultArray.(2);
+            resultArray.(1) <- [Some (Recommendation ("Recommend"))] @ resultArray.(1);
             (generate_response ())
           end
         else 
