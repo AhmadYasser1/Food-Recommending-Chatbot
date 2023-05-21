@@ -1,10 +1,37 @@
 (* Randomize the numbers used in the below random_int variable *)
 Random.self_init ();
 open Printf
-#use "rules.ml"
+
+(* Define a set of rules to base the program upon *)
+type rules = 
+| Greeting of string 
+| Recommendation of string 
+| Question of string 
+| Hunger of string
+| Cuisine of string
+| Indoors of string
+| Outdoors of string
+| Delivery of string
+| Takeaway of string
+| Restaurant_Location of string (*check its functionality on github*)
+| Price_Range of string
+| Closing_Conversation of string
+| Family_Friends_Date of string
+| Busyness of string
+| Hidden_Gem of string
+| Yes of string
+| No of string
+;;
+
+type 'a my_option = None | Some of 'a;;
+
+type rules_option = rules my_option;;
 
 (* Get input from the user *)
-let getUserInput = read_line;;
+let getUserInput string =
+  printf "%s" string;
+  read_line;
+;;
 
 (* Responds to the user's greeting *)
 let greetUserResponse =  
@@ -21,15 +48,15 @@ let greetUserResponse =
 
 (* Checks if the given character (char) is a char 
  * that belongs to the rules
- * Helper function used in the lexing function below *)
- let isChar character =
+* Helper function used in the lexing function below *)
+let isChar character =
   let alphabet = "abcdefghijklmnopqrstuvwxyz'-" in
   let char_index_option = String.index_opt alphabet character in
   char_index_option <> None
 ;;
 
 (* Checks if the given digit (char) is actually a digit or not 
- * Helper function used in the lexing function below *)
+  * Helper function used in the lexing function below *)
 let isDigit digit =
   let digits = "0123456789-" in
   let int_index_option = String.index_opt digits digit in
@@ -58,8 +85,8 @@ let string_to_charList string =
 (* Removes the duplicated characters in a Char List *)
 let removeDuplicatesInCharList char_list =
   let rec helper char_list accumulator =
-  match char_list with
-  | [] -> accumulator
+    match char_list with
+    | [] -> accumulator
   | head :: tail -> if List.mem head accumulator then helper (tail) (accumulator) else helper (tail) (head :: accumulator)
   in 
   helper char_list []
@@ -82,84 +109,360 @@ let filterDictionaryByKeyword dictionary_stringListList keyword =
 let map_stringListList_to_stringList dictionary_stringListList keyword = 
   List.map (
     fun word -> match word with
-      | [] | _::_::_ -> ""
+    | [] | _::_::_ -> ""
       | [word] -> word) (filterDictionaryByKeyword dictionary_stringListList keyword)
-;;
-(* Gets the index of the keyword found in the filtered list *)
-let get_index_of_keyword filtered_list =
-  let rec helper filtered_list index =
-    match filtered_list with
-    | keyword :: _ when (String.length keyword > 0) -> index
-    | _ :: tail -> helper tail (index + 1)
-    | [] -> index
-  in
+    ;;
+    (* Gets the index of the keyword found in the filtered list *)
+    let get_index_of_keyword filtered_list =
+      let rec helper filtered_list index =
+        match filtered_list with
+        | keyword :: _ when (String.length keyword > 0) -> index
+        | _ :: tail -> helper tail (index + 1)
+        | [] -> index
+      in
   helper filtered_list 1
- ;;
+;;
+let resultArray : rules_option list array = Array.make 17 ([None]);;
+
+let printResponse index = 
+  match index with
+  | 5 -> printf "cuisine: "
+  | 6 -> printf "indoors: "
+  | 7 -> printf "Outdoors: " 
+  | 8 -> printf "delivery: "
+  | 9 -> printf "takeawy: "
+  | 10 -> printf "location: "
+  | 12 -> printf "family: "
+  | 15 -> printf "Price Range: "
+  | _ -> printf "ay 7aga"
+;;
+
 (* Lexes the user input (explained thoroughly below) *)
 let rec lexString userInput =
   let string_length = String.length userInput in
   let rec tokenizeString starting_index accumulator =
     if starting_index >= string_length then
-    accumulator
-  else
+      accumulator
+    else
     match userInput.[starting_index] with
     (* Ignore tabs, spaces, new lines, and  punctuations *)
     | ' ' | '\t' | '\n' | '?' | '!' | '.' -> tokenizeString (starting_index + 1) (accumulator)
     (* If the lexer meets a character of type Char it takes all 
      * characters after it until the next character is not of type Char *)
     | char when (isChar char) ->(
-        let stopping_index = ref starting_index in
+      let stopping_index = ref starting_index in
         while !stopping_index < string_length && isChar (Char.lowercase_ascii userInput.[!stopping_index]) do
         incr stopping_index;
-        done;
-        (* keyword is saved as a substring of the original string from 
+      done;
+      (* keyword is saved as a substring of the original string from 
          *the calcaulated index above *)
         let keyword = removeDuplicatesInString(String.lowercase_ascii (String.sub userInput starting_index (!stopping_index - starting_index))) in
         (* maps the keyword to the rules in the dictionary to identify 
-         * it falls under which rule while removing the duplicates 
-         * Example: heeyy and helloo are validated *)
+        * it falls under which rule while removing the duplicates 
+        * Example: heeyy and helloo are validated *)
         let keyword_index =  get_index_of_keyword (map_stringListList_to_stringList (filterDictionaryByKeyword dictionary_stringListList keyword) (removeDuplicatesInString(keyword))) in
         match keyword_index with
-        | 1 -> tokenizeString(!stopping_index) (Greeting (keyword) :: accumulator)
-        | 2 -> tokenizeString(!stopping_index) (Recommendation (keyword) :: accumulator)
-        | 3 -> tokenizeString(!stopping_index) (Question (keyword) :: accumulator)
-        | 4 -> tokenizeString(!stopping_index) (Hunger (keyword) :: accumulator)
-        | 5 -> tokenizeString(!stopping_index) (Cuisine (keyword) :: accumulator)
-        | 6 -> tokenizeString(!stopping_index) (Dining (keyword) :: accumulator)
-        | 7 -> tokenizeString(!stopping_index) (Indoors_Outdoors (keyword) :: accumulator)
-        | 8 -> tokenizeString(!stopping_index) (Delivery (keyword) :: accumulator)
-        | 9 -> tokenizeString(!stopping_index) (Takeaway (keyword) :: accumulator)
-        | 10 -> tokenizeString(!stopping_index) (Restaurant_Location (keyword) :: accumulator)
-        | 11 -> tokenizeString(!stopping_index) (Price_Range (keyword) :: accumulator)
-        | 12 -> tokenizeString(!stopping_index) (Closing_Conversation (keyword) :: accumulator)
-        | _ -> tokenizeString (!stopping_index) (accumulator))
-    (* If the lexer meets a character of type int it takes all 
+        | 1 -> resultArray.(1) <- [Some (Greeting (keyword))] @ resultArray.(1); tokenizeString (!stopping_index) ((Some (Greeting keyword)) :: accumulator)
+        | 2 -> resultArray.(2) <- [Some (Recommendation (keyword))] @ resultArray.(2); tokenizeString (!stopping_index) ((Some (Recommendation keyword)) :: accumulator)
+        | 3 -> resultArray.(3) <- [Some (Question (keyword))] @ resultArray.(3); tokenizeString (!stopping_index) ((Some (Question keyword)) :: accumulator)
+        | 4 -> resultArray.(4) <- [Some (Hunger (keyword))] @ resultArray.(4); tokenizeString (!stopping_index) ((Some (Hunger keyword)) :: accumulator)
+        | 5 -> resultArray.(5) <- [Some (Cuisine (keyword))] @ resultArray.(5); tokenizeString (!stopping_index) ((Some (Cuisine keyword)) :: accumulator)
+        | 6 -> resultArray.(6) <- [Some (Indoors (keyword))] @ resultArray.(6); tokenizeString (!stopping_index) ((Some (Indoors keyword)) :: accumulator)
+        | 7 -> resultArray.(7) <- [Some (Outdoors (keyword))] @ resultArray.(7); tokenizeString (!stopping_index) ((Some (Outdoors keyword)) :: accumulator)
+        | 8 -> resultArray.(8) <- [Some (Delivery (keyword))] @ resultArray.(8); tokenizeString (!stopping_index) ((Some (Delivery keyword)) :: accumulator)
+        | 9 -> resultArray.(9) <- [Some (Takeaway (keyword))] @ resultArray.(9); tokenizeString (!stopping_index) ((Some (Takeaway keyword)) :: accumulator)
+        | 10 -> resultArray.(10) <- [Some (Restaurant_Location (keyword))] @ resultArray.(10); tokenizeString (!stopping_index) ((Some (Restaurant_Location keyword)) :: accumulator)
+        | 11 -> resultArray.(11) <- [Some (Closing_Conversation (keyword))] @ resultArray.(11); tokenizeString (!stopping_index) ((Some (Closing_Conversation keyword)) :: accumulator)
+        | 12 -> resultArray.(12) <- [Some (Family_Friends_Date (keyword))] @ resultArray.(12); tokenizeString (!stopping_index) ((Some (Family_Friends_Date keyword)) :: accumulator)
+        | 13 -> resultArray.(13) <- [Some (Yes (keyword))] @ resultArray.(13); tokenizeString (!stopping_index) ((Some (Yes keyword) :: accumulator))
+        | 14 -> resultArray.(14) <- [Some (No (keyword))] @ resultArray.(14); tokenizeString (!stopping_index) ((Some (No keyword) :: accumulator))
+        | _ -> tokenizeString (!stopping_index) (accumulator)
+    )
+    (* If the lexer meets a character of type int it takes all
     * characters after it until the next character is not of type int *)
-    | digit when (isDigit digit) ->
-          (let stopping_index = ref starting_index in
+    | digit when (isDigit digit) ->(
+      let stopping_index = ref starting_index in
           while !stopping_index < string_length && isDigit userInput.[!stopping_index] do
             incr stopping_index;
           done;
           (* Any number computed is saved in as string and will 
-           * represent the Price Range rule *)
+          * represent the Price Range rule *)
           let price_string = String.sub userInput starting_index (!stopping_index - starting_index) in
           (* Price is converted to an int *)
           let price = int_of_string price_string in
           match price with
-          | 0 -> printf "Food isn't free buddy. Food isn't free. Please enter a reasonable amount:\n\n"; getUserInput () |> lexString
-          | price when price >= 5 && price <= 200 -> tokenizeString(!stopping_index) (Price_Range("$") :: accumulator)
-          | price when price >= 201 && price <= 500 -> tokenizeString(!stopping_index) (Price_Range("$$") :: accumulator)
-          | price when price >= 501 -> tokenizeString(!stopping_index) (Price_Range("$$$") :: accumulator)
+          | price when price < 5 -> printf "Food isn't free buddy. Food isn't free. Please enter a reasonable amount:\n\n"; () |> getUserInput "Enter here: " |> lexString
+          | price when price >= 5 && price <= 200 -> resultArray.(15) <- [Some (Price_Range ("$"))] @ resultArray.(15); tokenizeString(!stopping_index) ((Some (Price_Range("$")) :: accumulator))
+          | price when price >= 201 && price <= 500 -> resultArray.(15) <- [Some (Price_Range ("$$"))] @ resultArray.(15); tokenizeString(!stopping_index) ((Some (Price_Range("$$")) :: accumulator))
+          | price when price >= 501 -> resultArray.(15) <- [Some (Price_Range ("$$$"))] @ resultArray.(15); tokenizeString(!stopping_index) ((Some (Price_Range("$$$")) :: accumulator))
           | _ -> tokenizeString (!stopping_index) (accumulator))
     | _ -> tokenizeString (starting_index + 1) (accumulator)
   in
   tokenizeString 0 []
 ;;
 
-(* Greets the user as the first message of the program *)
-print_string "\nHello User\n
-          My name is Mr. Hungry a chatbot made to help you choose your next eating expereience.
-          But first I need to ask you some stuff. *RUMBLING* HAHA Looks like you're dying to get a bite to eat. Let's get into it.
-          How can i help you???\n\n";;
+let lexed_user_input = () |> getUserInput "Enter here:" |> lexString;;
 
-let userPreference = getUserInput () |> lexString ;;
+let checkRecommendation =
+  if (resultArray.(2) = [None]) then false
+  else true
+;;
+
+let meetsMinimum =
+  if (resultArray.(5) <> [None] && resultArray.(10) <> [None] && resultArray.(15) <> [None]) then true
+  else false
+;;
+
+let checkBareMinimum =
+  if (resultArray.(5) = [None]) then false
+  else if (resultArray.(10) = [None]) then false
+  else if (resultArray.(15) = [None]) then false
+  else true
+;;
+
+let rec needRecommendations userPreference =
+    match userPreference with
+    | Some (Yes (_)) :: _ -> true
+    | Some (No (_)) :: _ -> false
+    | [] -> printf "enter an appropriate answer: "; needRecommendations (() |> getUserInput "Enter your input: " |> lexString)
+    | _ -> needRecommendations (List.tl userPreference)
+;;
+  
+let rec printNotMeetingBareMinimum () =
+  if (resultArray.(5) = [None]) then 
+    begin
+      printf "Enter Cuisine: ";
+      [@warning "-10"] lexed_user_input;
+      begin
+        match resultArray.(5) with
+        | _ -> printNotMeetingBareMinimum ()
+      end
+    end
+  else if (resultArray.(10) = [None]) then 
+    begin
+      printf "Enter Restauran Location: ";
+      [@warning "-10"] lexed_user_input;
+      begin
+        match resultArray.(10) with
+        | _ -> printNotMeetingBareMinimum ()
+      end
+    end
+  else if (resultArray.(15) = [None]) then 
+    begin
+      printf "Enter Price Range: ";
+      [@warning "-10"] lexed_user_input;
+      begin
+        match resultArray.(15) with
+        | _ -> printNotMeetingBareMinimum ()
+      end
+    end
+;;
+
+let string_of_option = function
+  | None -> "None"
+  | Some s -> "Some \"" ^ s ^ "\""
+
+
+
+let rec mapListToString lst x =
+  match x with 
+  | 5 -> (match lst with
+  | [] -> ""
+  | option :: tail -> match option with
+  | Some (Cuisine y) -> y ^ (mapListToString tail x)
+  | _ -> ""
+        )
+  | 6 -> (match lst with
+        | [] -> ""
+        | option :: tail -> match option with
+        | Some (Indoors y) -> y ^ (mapListToString tail x)
+                | _ -> ""
+        )
+  | 7 -> (match lst with
+        | [] -> ""
+        | option :: tail -> match option with
+                | Some (Outdoors y) -> y ^ (mapListToString tail x)
+                | _ -> ""
+                )  
+                | 8 -> (match lst with
+                | [] -> ""
+        | option :: tail -> match option with
+                | Some (Delivery y) -> y ^ (mapListToString tail x)
+                | _ -> ""
+        ) 
+  | 9 -> (match lst with
+        | [] -> ""
+        | option :: tail -> match option with
+                | Some (Takeaway y) -> y ^ (mapListToString tail x)
+                | _ -> ""
+        )   
+  | 10 -> (match lst with
+        | [] -> ""
+        | option :: tail -> match option with
+                | Some (Restaurant_Location y) -> y ^ (mapListToString tail x)
+                | _ -> ""
+        )
+  | 12 -> (match lst with
+  | [] -> ""
+  | option :: tail -> match option with
+  | Some (Family_Friends_Date y) -> y ^ (mapListToString tail x)
+  | _ -> ""
+  )
+  | 15 -> (match lst with
+  | [] -> ""
+        | option :: tail -> match option with
+        | Some (Price_Range y) -> y ^ (mapListToString tail x)
+        | _ -> ""
+        )
+  | _ -> ""
+  
+;;
+
+
+
+let rec generate_response () = 
+  begin
+    if (checkRecommendation) then
+      begin
+        if (checkBareMinimum) then 
+          generateSuggestions (finalListFromResultArray resultArray)
+        else
+          begin
+            printf "You are not meeting the bare minimum khod\n";
+            printNotMeetingBareMinimum ();
+            generateSuggestions (finalListFromResultArray resultArray)
+          end
+      end
+    else
+      begin
+        if (needRecommendations (() |> getUserInput "Do you need recommendations: " |> lexString)) then
+          generate_response ()
+        else 
+          begin 
+            let x = ref true;
+            while (x)
+            do
+              
+
+          end
+      end
+  end
+;;
+
+let main () = 
+  printf "Hey peeps, I'm Omar Elabasery";
+  printf "What can I help you with?\n";
+  generate_response (lexed_user_input);
+;;
+
+main;
+  
+  let finalListFromResultArray resultArray = 
+    let rec helper x = 
+      match x with
+      | 5 -> (mapListToString resultArray.(x) x) :: (helper (x+1))
+      | 6 -> (mapListToString resultArray.(x) x) :: (helper (x+1))
+      | 7 -> (mapListToString resultArray.(x) x) :: (helper (x+1))
+      | 8 -> (mapListToString resultArray.(x) x) :: (helper (x+1))
+      | 9 -> (mapListToString resultArray.(x) x) :: (helper (x+1))
+      | 10 -> (mapListToString resultArray.(x) x) :: (helper (x+1))
+      | 12 -> (mapListToString resultArray.(x) x) :: (helper (x+1))
+      | 15 -> (mapListToString resultArray.(x) x) :: (helper (x+1))
+      | n when n > 15 -> []
+      | _ -> helper (x+1)
+    in
+    helper 0
+  ;;
+  
+  
+  (* Reads each first string prior to the first comma in each row 
+   * in the Restaurant.csv file to save each restaurant in a tuple 
+   * for later computation *)
+   let readStringUntilFirstComma string =
+    let string_length = String.length string in
+    let rec loopOverLine index =
+      if index = string_length || string.[index] = ',' then
+        String.sub string 0 index
+      else
+        loopOverLine (index + 1)
+    in
+    loopOverLine 0
+  ;;
+  
+  (* Checks if the user preference is in the row in question
+   * Helper function to the calculatePoints function *)
+  let isPreference_Substring_Of_CurrentRow current_row user_preference =
+    let current_row_length = String.length current_row in
+    let user_preference_length = String.length user_preference in
+    let rec loopOverRow starting_index =
+      if starting_index + user_preference_length > current_row_length then
+        false
+      else if String.sub current_row starting_index user_preference_length = user_preference then
+        true
+      else
+        loopOverRow (starting_index + 1)
+    in
+    loopOverRow 0
+  ;;
+  
+  (* calculates the points for a given restaurant/row based on the user's preferences 
+   * Returns a tuple as follows (Restaurant Name, Points)*)
+  let calculatePoints current_row finalListFromResultArray =
+    let rec helper list points =
+      match list with
+      | [] -> points
+      (* Checks if the user_preference is included in the row in question 
+       * If it is a substring of the row, then 10 points are added
+       * Else, no points are added*)
+      | user_preference :: tail when (isPreference_Substring_Of_CurrentRow (String.lowercase_ascii current_row) user_preference = true) -> helper tail (points + 10)
+      | user_preference :: tail when (isPreference_Substring_Of_CurrentRow (String.lowercase_ascii current_row) user_preference = false) -> helper tail points
+      | _ :: _ -> points
+    in
+    helper finalListFromResultArray 0
+  ;;
+  
+  (* Calls the calculatePoints function over each restaurant/row
+   * Returns a list of tuples as follows [(Restaurant1 Name, Points1) ; (Restaurant2 Name, Points2) ]*)
+  let rec createRestaurantsList restaurant_file_from_csv finalListFromResultArray= 
+    match input_line restaurant_file_from_csv with
+    | exception End_of_file -> []
+    | line -> (line ,calculatePoints line finalListFromResultArray) :: createRestaurantsList restaurant_file_from_csv finalListFromResultArray
+  ;;
+  
+  let split_on_comma str =
+    String.split_on_char ',' str
+  ;;
+  
+  let generateSuggestions finalListFromResultArray=
+  
+    (* flush and close the channel *)
+    List.iter(fun x -> print_endline x) finalListFromResultArray;
+    (* Read file and display the first line *)
+    if (finalListFromResultArray <> [])
+       then
+      let restaurant_file_from_csv = open_in "Restaurants.csv" in
+  
+      let restaurants_points = createRestaurantsList restaurant_file_from_csv finalListFromResultArray in
+  
+      (* Sort, in descending order, the restaurants based on their calculated points *)
+      let sorted_restaurants_points = List.sort (fun (_, point1) (_, point2) -> compare point2 point1) restaurants_points in
+  
+      for i = 0 to 2 do
+        let list_of_restaurant_info = split_on_comma(fst (List.nth sorted_restaurants_points i)) in
+        printf "The first restaurant I recommend for you is %s\n" (List.nth list_of_restaurant_info 0);
+        print_endline "\nRestaurant's Info\n";
+        printf "\tCity: %s,  Serving: %s,\n\tServices Available: %s,  You can Dine: %s,  Working Hours: %s\n
+        \tBest Dish: %s,  Capacity: %s,  Busyness: %s,  Waiting time: %s minutes,  Price Range (per person): %s\n
+        \tDelivery time: %s,  Hidden Gem?: %s,  GPS Location: %s,  You can take: %s there,  Rating: %s,  Hotline: %s\n\n" (List.nth list_of_restaurant_info 1)
+         (List.nth list_of_restaurant_info 2) (List.nth list_of_restaurant_info 3) (List.nth list_of_restaurant_info 4) (List.nth list_of_restaurant_info 5)
+        (List.nth list_of_restaurant_info 6) (List.nth list_of_restaurant_info 7) (List.nth list_of_restaurant_info 8) (List.nth list_of_restaurant_info 9)
+         (if (List.nth list_of_restaurant_info 10) = "$" then "5-200 EGP" else if (List.nth list_of_restaurant_info 10) = "$$" then "201-500 EGP" else "501+ EGP") 
+         (List.nth list_of_restaurant_info 11) (List.nth list_of_restaurant_info 12) (List.nth list_of_restaurant_info 13)
+        (List.nth list_of_restaurant_info 14) (List.nth list_of_restaurant_info 15) (List.nth list_of_restaurant_info 16);
+      done;
+  
+        (* write the result to stdout *)
+        flush stdout;
+        close_in restaurant_file_from_csv
+    ;;
+  ;;
