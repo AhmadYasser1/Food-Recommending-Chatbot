@@ -39,17 +39,18 @@ let isPreference_Substring_Of_CurrentRow current_row user_preference =
 (* calculates the points for a given restaurant/row based on the user's preferences 
 * Returns a tuple as follows (Restaurant Name, Points)*)
 let calculatePoints current_row finalListFromResultArray =
- let rec helper list points =
+ let rec helper list points index =
    match list with
    | [] -> points
    (* Checks if the user_preference is included in the row in question 
     * If it is a substring of the row, then 10 points are added
     * Else, no points are added*)
-   | user_preference :: tail when (isPreference_Substring_Of_CurrentRow (String.lowercase_ascii current_row) user_preference = true) -> helper tail (points + 10)
-   | user_preference :: tail when (isPreference_Substring_Of_CurrentRow (String.lowercase_ascii current_row) user_preference = false) -> helper tail points
+   | user_preference :: tail when (isPreference_Substring_Of_CurrentRow (String.lowercase_ascii current_row) user_preference = true && index = 0) -> helper tail (points + 50) (index+1)
+   | user_preference :: tail when (isPreference_Substring_Of_CurrentRow (String.lowercase_ascii current_row) user_preference = true && index <> 0) -> helper tail (points + 10) (index + 1)
+   | user_preference :: tail when (isPreference_Substring_Of_CurrentRow (String.lowercase_ascii current_row) user_preference = false) -> helper tail points (index + 1)
    | _ :: _ -> points
  in
- helper finalListFromResultArray 0
+ helper finalListFromResultArray 0 0
 ;;
 
 (* Calls the calculatePoints function over each restaurant/row
@@ -86,7 +87,7 @@ let generateSuggestions finalListFromResultArray=
      \tDelivery time: %s,  Hidden Gem?: %s,  GPS Location: %s,  You can take: %s there,  Rating: %s,  Hotline: %s\n\n" (List.nth list_of_restaurant_info 1)
       (List.nth list_of_restaurant_info 2) (List.nth list_of_restaurant_info 3) (List.nth list_of_restaurant_info 4) (List.nth list_of_restaurant_info 5)
      (List.nth list_of_restaurant_info 6) (List.nth list_of_restaurant_info 7) (List.nth list_of_restaurant_info 8) (List.nth list_of_restaurant_info 9)
-      (if (List.nth list_of_restaurant_info 10) = "$" then "5-200 EGP" else if (List.nth list_of_restaurant_info 10) = "$$" then "201-500 EGP" else "501+ EGP") 
+      (if (List.nth list_of_restaurant_info 10) = "$" then "10-200 EGP" else if (List.nth list_of_restaurant_info 10) = "$$" then "201-500 EGP" else "501+ EGP") 
       (List.nth list_of_restaurant_info 11) (List.nth list_of_restaurant_info 12) (List.nth list_of_restaurant_info 13)
      (List.nth list_of_restaurant_info 14) (List.nth list_of_restaurant_info 15) (List.nth list_of_restaurant_info 16);
    done;
